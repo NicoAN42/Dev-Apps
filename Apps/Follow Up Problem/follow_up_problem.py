@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load variables from .env file
 
-SENDER_EMAIL = 'nicoardian17th@gmail.com'  # Replace with your Gmail sender
+SENDER_EMAIL = 'xxxx@gmail.com'  # Replace with your Gmail sender
 SENDER_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")  # Load app password from env var
 RECIPIENT_EMAIL = 'nugrohonicoardian@gmail.com'
 SMTP_SERVER = 'smtp.gmail.com'
