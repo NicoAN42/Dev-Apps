@@ -27,10 +27,10 @@
 
 > 📌 Replace these placeholder images with real app screenshots to showcase your tools.
 ## 🖼️ Report Preview
-| App Name        | Screenshot                                 |
+| Page       | Screenshot                                 |
 |------------------|--------------------------------------------|
-| Page 1-2   | ![Folder App](assets/report1.png)          |
-| Page 3-4 | ![Folder App](assets/report2.png)        |
+| 1-2   | ![Folder App](assets/report1.png)          |
+| 3-4 | ![Folder App](assets/report2.png)        |
 
 ## ⚙️ Built With
 
