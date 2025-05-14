@@ -33,6 +33,7 @@ def extract_data_from_excel(file_path, source_key):
             f"{prefix}_trx_180": sim_sheet["B8"].value,
             f"{prefix}_trx_240": sim_sheet["B9"].value
         }
+        
     except Exception:
         show_toast("Error", f"Failed to read: {os.path.basename(file_path)}")
         return {}
