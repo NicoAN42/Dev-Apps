@@ -44,11 +44,12 @@
 
 ## 🚀 Usage Workflow
 
-    A[Start] --> B[Select Folder]
-    B --> C[Choose Script/App]
-    C --> D[Process Files]
-    D --> E[Export Report or Log]
-    E --> F[Done]
+    A[Start] --> B[Create Folder]
+    B --> C[Rename File]
+    C --> D[Combine Data]
+    D --> E[Process Data]
+    E --> F[Export Report]
+    F --> G[Done and Check Log]
 
 💡 Getting Started
 Clone the repository:
