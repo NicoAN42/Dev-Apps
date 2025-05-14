@@ -1,6 +1,6 @@
-# 🚀 Dev Apps SOW
+# 🚀 Dev Apps by SOW 7
 
-**Dev-Apps** is a curated collection of powerful desktop tools and automation scripts designed to simplify repetitive tasks, streamline workflows, and boost development productivity.
+**Dev Apps by SOW 7** is a curated collection of powerful desktop tools and automation scripts designed to simplify repetitive tasks, streamline workflows, and boost development productivity.
 
 ---
 
