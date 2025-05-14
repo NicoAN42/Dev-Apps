@@ -19,7 +19,7 @@
 
 | App Name        | Screenshot                                 |
 |------------------|--------------------------------------------|
-| Folder Creator   |        |
+| Folder Creator   | ![Folder App](assets/folder_app.png)          |
 | Rename FIle |         |
 | Combine Data       |         |
 | Processing Data   |        |
