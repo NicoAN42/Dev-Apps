@@ -21,7 +21,7 @@ def center_window(window):
     y = (screen_height // 2) - (window_height // 2)
     window.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-# Call center_window to center the window
+# Call center_window to center the windoww
 center_window(app)
 
 # Variables (initialized after app)
