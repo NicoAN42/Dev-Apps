@@ -68,4 +68,4 @@ Submit it on the Issues page.
 
 ---
 
-Thank You for Visiting this Repository !
+Thank You for Visiting My Code Playground !
