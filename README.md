@@ -20,8 +20,10 @@
 | App Name        | Screenshot                                 |
 |------------------|--------------------------------------------|
 | Folder Creator   |        |
+| Rename FIle |         |
+| Combine Data       |         |
+| Processing Data   |        |
 | Report Generator |         |
-| Excel Tool       |         |
 
 > 📌 Replace these placeholder images with real app screenshots to showcase your tools.
 ---
