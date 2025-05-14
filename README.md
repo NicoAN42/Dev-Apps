@@ -19,14 +19,18 @@
 
 | App Name        | Screenshot                                 |
 |------------------|--------------------------------------------|
-| Folder Creator   | ![Folder App](assets/folder_app.png)          |
-| Rename FIle |         |
-| Combine Data       |         |
-| Processing Data   |        |
-| Report Generator |         |
+| Folder Creator   | ![Folder App](assets/CreateFolder.png)          |
+| Rename FIle | ![Folder App](assets/RenameFile.png)        |
+| Combine Data       | ![Folder App](assets/DataCombine.png)        |
+| Processing Data   | ![Folder App](assets/DataProcessing.png)       |
+| Report Generator | ![Folder App](assets/GenerateReport.png)        |
 
 > 📌 Replace these placeholder images with real app screenshots to showcase your tools.
----
+## 🖼️ Report Preview
+| App Name        | Screenshot                                 |
+|------------------|--------------------------------------------|
+| Page 1-2   | ![Folder App](assets/report1.png)          |
+| Page 3-4 | ![Folder App](assets/report2.png)        |
 
 ## ⚙️ Built With
 
