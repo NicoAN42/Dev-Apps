@@ -65,6 +65,7 @@ Found an issue or have a feature request?
 Submit it on the Issues page.
 
 ⭐ If you like this project, give it a star on GitHub!
+access github repository at https://github.com/NicoAN42/DevAppsSOW7
 
 ---
 
