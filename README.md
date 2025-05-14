@@ -48,12 +48,6 @@
 Clone the repository:
 git clone https://github.com/NicoAN42/Dev-Apps.git
 
-Navigate and explore:
-cd Dev-Apps
-
-Run an app or script:
-python Apps/FolderCreator/main.py
-
 🤝 Contributing
 Contributions are welcome!
 Fork the repo → Create a branch → Make changes → Submit a pull request.
