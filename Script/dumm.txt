@@ -1,0 +1,294 @@
+import os
+import math
+import time
+import threading
+import platform
+from datetime import datetime
+from tkinter import messagebox, filedialog, scrolledtext
+import tkinter as tk
+
+from openpyxl import load_workbook
+from openpyxl.styles import Border, Side, Font, PatternFill
+import ttkbootstrap as tb
+
+
+class DataProcessorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Processing Data Mission Digital")
+        self.root.geometry("700x600")
+        self.center_window(700, 600)
+        self.root.resizable(False, False)
+
+        self.style = tb.Style("flatly")
+        self.frame = tb.Frame(self.root, padding=20)
+        self.frame.pack(expand=True, fill="both")
+
+        self.title_label = tb.Label(self.frame, text="Processing Data Mission Digital", font=("Segoe UI", 18, "bold"))
+        self.title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+
+        label_font = ("Segoe UI", 11)
+        tb.Label(self.frame, text="Nama:", font=label_font).grid(row=1, column=0, sticky="e", pady=5)
+        self.nama_entry = tb.Entry(self.frame, width=40)
+        self.nama_entry.grid(row=1, column=1, columnspan=2, sticky="w", pady=5)
+
+        tb.Label(self.frame, text="NIP:", font=label_font).grid(row=2, column=0, sticky="e", pady=5)
+        self.nip_entry = tb.Entry(self.frame, width=40)
+        self.nip_entry.grid(row=2, column=1, columnspan=2, sticky="w", pady=5)
+
+        self.select_button = tb.Button(self.frame, text="Choose Parent Folder", bootstyle="info", command=self.select_folder)
+        self.select_button.grid(row=3, column=0, columnspan=3, pady=10)
+
+        self.progress = tb.Progressbar(self.frame, length=600, bootstyle="success-striped")
+        self.progress.grid(row=4, column=0, columnspan=3, pady=(10, 10))
+
+        self.status_label = tb.Label(self.frame, text="Status: Waiting", font=("Segoe UI", 10, "bold"))
+        self.status_label.grid(row=5, column=0, columnspan=3, sticky="w", pady=(0, 2))
+
+        self.elapsed_label = tb.Label(self.frame, text="Elapsed time: 0s", font=("Segoe UI", 10))
+        self.elapsed_label.grid(row=6, column=0, columnspan=3, sticky="w", pady=(0, 10))
+
+        self.log_text = scrolledtext.ScrolledText(self.frame, height=10, wrap="word", font=("Segoe UI", 9))
+        self.log_text.grid(row=7, column=0, columnspan=3, sticky="nsew", pady=5)
+        self.log_text.configure(state="disabled")
+
+        self.process_button = tb.Button(self.frame, text="Start Process", bootstyle="success", command=self.start_process)
+        self.process_button.grid(row=8, column=1, pady=10, sticky="e", padx=(0, 10))
+
+        self.cancel_button = tb.Button(self.frame, text="Cancel", bootstyle="danger", command=self.cancel_process, state="disabled")
+        self.cancel_button.grid(row=8, column=2, pady=10, sticky="w")
+
+        self.folder_path = None
+        self.stop_flag = False
+        self.start_time = None
+        self.update_timer = None
+        self.log_lines = []
+
+    def center_window(self, width, height):
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = int((screen_width / 2) - (width / 2))
+        y = int((screen_height / 2) - (height / 2))
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+    def log_message(self, message):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        full_message = f"[{timestamp}] {message}"
+        self.log_lines.append(full_message)
+        self.log_text.configure(state="normal")
+        self.log_text.insert("end", full_message + "\n")
+        self.log_text.see("end")
+        self.log_text.configure(state="disabled")
+
+    def save_log_to_file(self):
+        log_path = os.path.join(self.folder_path, f"log_processing_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+        with open(log_path, "w", encoding="utf-8") as log_file:
+            for line in self.log_lines:
+                log_file.write(line + "\n")
+
+    def select_folder(self):
+        self.folder_path = filedialog.askdirectory()
+       
+
+    def start_process(self):
+        nama = self.nama_entry.get().strip()
+        nip = self.nip_entry.get().strip()
+        if not nama or not nip:
+            messagebox.showwarning("Input Required", "Please enter both Nama and NIP.")
+            return
+        if not self.folder_path:
+            messagebox.showwarning("No Folder", "Please select a parent folder.")
+            return
+
+        self.nama_entry.config(state="disabled")
+        self.nip_entry.config(state="disabled")
+        self.select_button.config(state="disabled")
+        self.process_button.config(state="disabled")
+        self.cancel_button.config(state="normal")
+
+        self.stop_flag = False
+        threading.Thread(target=self.run_processing, args=(nama, nip), daemon=True).start()
+
+    def cancel_process(self):
+        self.stop_flag = True
+        self.status_label.config(text="Cancelling...")
+
+    def update_elapsed_time(self):
+        if self.start_time:
+            elapsed = int(time.time() - self.start_time)
+            mins, secs = divmod(elapsed, 60)
+            self.elapsed_label.config(text=f"Elapsed time: {mins}m {secs}s" if mins else f"Elapsed time: {secs}s")
+            self.update_timer = self.root.after(1000, self.update_elapsed_time)
+
+    def run_processing(self, nama, nip):
+        self.start_time = time.time()
+        self.update_elapsed_time()
+        created_count = 0
+        skipped_folders = []
+        total_folders = sum(1 for _ in os.walk(self.folder_path))
+        processed_folders = 0
+
+        self.progress["maximum"] = total_folders
+        self.progress["value"] = 0
+
+        self.log_lines.clear()
+        self.log_message(f"Log started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        self.log_message(f"Parent folder: {self.folder_path}\n")
+
+        for dirpath, _, _ in os.walk(self.folder_path):
+            if self.stop_flag:
+                break
+
+            combined_path = os.path.join(dirpath, "combined.xlsx")
+            result_path = os.path.join(dirpath, "result.xlsx")
+
+            if os.path.exists(combined_path):
+                success, message = self.calculate_and_save_excel(combined_path, result_path, nama, nip)
+                if success:
+                    created_count += 1
+                    self.log_message(f"[✓] Success - {dirpath}")
+                else:
+                    self.log_message(f"[X] Failed - {dirpath} - {message}")
+            else:
+                skipped_folders.append(dirpath)
+                self.log_message(f"[!] Skipped (no combined.xlsx) - {dirpath}")
+
+            processed_folders += 1
+            self.progress["value"] = processed_folders
+            self.status_label.config(text=f"Processing... ({processed_folders}/{total_folders})")
+            self.root.update_idletasks()
+
+        self.log_message("\n===== Summary =====")
+        self.log_message(f"Total folders checked: {total_folders}")
+        self.log_message(f"Files created: {created_count}")
+        self.log_message(f"Skipped folders (no combined.xlsx): {len(skipped_folders)}")
+        for folder in skipped_folders:
+            self.log_message(f" - {folder}")
+
+        if self.update_timer:
+            self.root.after_cancel(self.update_timer)
+            self.update_timer = None
+
+        elapsed = int(time.time() - self.start_time)
+        mins, secs = divmod(elapsed, 60)
+        elapsed_str = f"{mins}m {secs}s" if mins else f"{secs}s"
+        self.elapsed_label.config(text=f"Elapsed time: {elapsed_str}")
+
+        self.status_label.config(text=f"Done. Files created: {created_count}")
+        self.process_button.config(state="normal")
+        self.cancel_button.config(state="disabled")
+        self.nama_entry.config(state="normal")
+        self.nip_entry.config(state="normal")
+        self.select_button.config(state="normal")
+
+        self.save_log_to_file()
+
+        if not self.stop_flag:
+            if messagebox.showinfo("Completed", f"Processing completed.\nFiles created: {created_count}\nTime: {elapsed_str}\n\nClick OK to close."):
+                self.root.destroy()
+
+    def calculate_and_save_excel(self, file_path, save_path, nama, nip):
+        try:
+            wb = load_workbook(file_path)
+            ws = wb.active
+
+            thin_border = Border(left=Side(style='thin'), right=Side(style='thin'),
+                                 top=Side(style='thin'), bottom=Side(style='thin'))
+            bold_font = Font(bold=True)
+            red_fill = PatternFill(start_color="FF9999", end_color="FF9999", fill_type="solid")
+
+            calc_ws = wb.create_sheet("Calculated Data")
+            headers = ["Periode", "Jumlah Transaksi Mesin", "Jumlah Transaksi Counter", "Total Transaksi", "Presentase Penggunaan Digital"]
+            calc_ws.append(headers)
+            for cell in calc_ws[1]:
+                cell.font = bold_font
+                cell.border = thin_border
+
+            for row_data in ws.iter_rows(min_row=2, values_only=True):
+                periode, mesin, counter = row_data
+                total = mesin + counter
+                presentase = mesin / total if total else 0
+                percent_str = "{:.2f}%".format(presentase * 100).replace('.', ',')
+                calc_ws.append([periode, mesin, counter, total, percent_str])
+
+            for row in calc_ws.iter_rows(min_row=2, max_col=5):
+                for cell in row:
+                    cell.border = thin_border
+                try:
+                    presentase_value = float(row[4].value.replace('%', '').replace(',', '.'))
+                    if presentase_value < 85.00:
+                        row[4].fill = red_fill
+                except:
+                    pass
+
+            total_transaksi_vals = [row[3] for row in calc_ws.iter_rows(min_row=2, values_only=True)]
+            presentase_vals = [float(row[4].replace(',', '.').replace('%', '')) / 100 for row in calc_ws.iter_rows(min_row=2, values_only=True)]
+
+            result_ws = wb.create_sheet("Result Data")
+            result_ws.append(["Keterangan", "Presentase", "Transaksi"])
+            for cell in result_ws[1]:
+                cell.font = bold_font
+                cell.border = thin_border
+
+            avg_presentase = sum(presentase_vals) / len(presentase_vals)
+            avg_transaksi = sum(total_transaksi_vals) / len(total_transaksi_vals)
+            target = 0.85
+            gap = target - avg_presentase
+            total_transaksi_sum = sum(total_transaksi_vals)
+            kekurangan_transaksi = int(gap * total_transaksi_sum)
+
+            def pct(val): return "{:.2f}%".format(val * 100).replace('.', ',')
+            def num(val): return "{:,}".format(round(val)).replace(',', '.')
+
+            if platform.system() == "Windows":
+                date_now_str = datetime.now().strftime("%#d %B %Y")
+            else:
+                date_now_str = datetime.now().strftime("%-d %B %Y")
+
+            result_data = [
+                [f"Presentase per {date_now_str}", pct(avg_presentase), ""],
+                ["Target", pct(target), ""],
+                ["Kekurangan transaksi", pct(gap), str(kekurangan_transaksi)],
+                ["Rata-rata transaksi harian", "", str(round(avg_transaksi))],
+            ]
+
+            for row in result_data:
+                result_ws.append(row)
+
+            for row in result_ws.iter_rows(min_row=2, max_col=3):
+                for cell in row:
+                    cell.border = thin_border
+
+            simulasi_ws = wb.create_sheet("Simulasi Transaksi")
+            simulasi_ws.append(["Total Hari", "Target Transaksi"])
+            for cell in simulasi_ws[1]:
+                cell.font = bold_font
+                cell.border = thin_border
+
+            total_hari_values = [10, 20, 30, 60, 90, 120, 180, 240]
+
+            try:
+                target_5th_row_transaksi = int(str(result_ws.cell(row=5, column=3).value).replace(',', '').strip())
+                target_4th_row_transaksi = int(str(result_ws.cell(row=4, column=3).value).replace(',', '').strip())
+            except:
+                target_5th_row_transaksi = 0
+                target_4th_row_transaksi = 0
+
+            for total_hari in total_hari_values:
+                target_transaksi = target_5th_row_transaksi + math.ceil(target_4th_row_transaksi / total_hari)
+                simulasi_ws.append([total_hari, "{:,}".format(target_transaksi).replace(',', '.')])
+
+            for row in simulasi_ws.iter_rows(min_row=2, max_col=2):
+                for cell in row:
+                    cell.border = thin_border
+
+            wb.save(save_path)
+            return True, save_path
+        except Exception as e:
+            return False, str(e)
+
+
+if __name__ == "__main__":
+    root = tb.Window(themename="flatly")
+    app = DataProcessorApp(root)
+    root.mainloop()

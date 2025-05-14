@@ -1,0 +1,13 @@
+1. Install pandas -> pip install pandas openpyxl
+2. Prepare Destination or Source File
+    a. E:\Work\SOW\Report Utilisasi 2025\Utilisasi Mesin Digital\(date Report)\(main Branch)\(sub Branch)\(Services)
+    b. Act.xlsx and Trx.xlsx -> combi.xlsx
+3. Script to Combine excel Act and Trx
+    a. combine_script.py
+4. Script to process get data combined excel   
+    b. data_processing.py
+5. We have new excel (combined and result)
+
+
+https://chatgpt.com/share/6819bced-53fc-8006-ab83-d87ff086514a
+https://chatgpt.com/share/6819bd05-b058-8006-973a-f7e5109e64c3
