@@ -479,3 +479,5 @@ KCU Banyuwangi/
     │   └── result.xlsx
     └── Star Teller/
         └── result.xlsx
+
+pyinstaller --onefile --windowed your_script_name.py
