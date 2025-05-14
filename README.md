@@ -68,4 +68,4 @@ Submit it on the Issues page.
 
 ---
 
-Let me know when the banner image finishes rendering—I’ll provide it for download so you can save it under `assets/banner.png`. You can also upload your actual app screenshots, and I’ll help create properly cropped/resized versions.
+Thank You for Visiting this Repository !
