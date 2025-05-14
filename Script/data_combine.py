@@ -130,7 +130,7 @@ def run_processing(name, nip, parent_folder):
 
     total = len(folders)
     if total == 0:
-        progress_label.config(text="⚠️ No valid folders found.")
+        progress_label.config(text="⚠️ No valid folder and files found.")
         return
 
     progress_bar["maximum"] = total

@@ -292,3 +292,190 @@ if __name__ == "__main__":
     root = tb.Window(themename="flatly")
     app = DataProcessorApp(root)
     root.mainloop()
+
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.utils import get_column_letter
+from datetime import datetime
+import os
+
+# Simulate sample data since no actual Excel file was provided
+# We'll create a workbook similar to what the user described
+
+# Step 1: Create initial "Transaksi Harian" sheet
+wb = Workbook()
+ws = wb.active
+ws.title = "Transaksi Harian"
+
+# Headers
+ws.append(["Periode", "Jumlah Transaksi Mesin", "Jumlah Transaksi Counter"])
+# Sample data rows
+ws.append(["2025-04-01", 1000, 500])
+ws.append(["2025-04-02", 1200, 600])
+ws.append(["2025-04-03", 1100, 700])
+
+# Step 2: Create "Calculated Data" sheet
+calc_ws = wb.create_sheet("Calculated Data")
+calc_ws.append(["Periode", "Jumlah Transaksi Mesin", "Jumlah Transaksi Counter", 
+                "Total Transaksi", "Presentase Penggunaan Digital"])
+
+# Copy data and calculate new columns
+for row in ws.iter_rows(min_row=2, values_only=True):
+    periode, mesin, counter = row
+    total = mesin + counter
+    persentase = mesin / total if total else 0
+    calc_ws.append([periode, mesin, counter, total, f"{persentase:.2%}"])
+
+# Step 3: Create "Result Data" sheet
+result_ws = wb.create_sheet("Result Data")
+result_ws.append(["Keterangan", "Presentase", "Transaksi"])
+
+# Gather data from Calculated Data sheet
+presentase_vals = []
+total_transaksi_vals = []
+
+for row in calc_ws.iter_rows(min_row=2, values_only=True):
+    total = row[3]
+    persentase_str = row[4].replace('%', '').replace(',', '.')
+    persentase = float(persentase_str) / 100
+    presentase_vals.append(persentase)
+    total_transaksi_vals.append(total)
+
+avg_presentase = sum(presentase_vals) / len(presentase_vals)
+avg_transaksi = sum(total_transaksi_vals) / len(total_transaksi_vals)
+target = 0.85
+gap = target - avg_presentase
+total_transaksi_sum = sum(total_transaksi_vals)
+kekurangan_transaksi = gap * total_transaksi_sum
+
+# Format numbers for Excel display
+def pct(val): return f"{val * 100:.2f}%".replace('.', ',')
+def num(val): return f"{round(val):,}".replace(',', '.')
+
+date_now_str = datetime.now().strftime("%-d %B %Y")
+
+result_ws.append([f"Presentase per {date_now_str}", pct(avg_presentase), ""])
+result_ws.append(["Target", pct(target), ""])
+result_ws.append(["Kekurangan transaksi", pct(gap), num(kekurangan_transaksi)])
+result_ws.append(["Rata -rata transaksi harian", "", num(avg_transaksi)])
+
+# Save to file
+output_path = "/mnt/data/calculated_result.xlsx"
+wb.save(output_path)
+output_path
+
+====
+I want an application from python GUI using ttkbootstrap, and an attractive toast notification display
+
+This application will provide output in the form of a docx file, which comes from the process of uploading excel and word files that are the master template.
+
+First the user will be given a greeting, a welcome page and then there will be a display to enter the Full Name of the Report Maker
+
+In the main display there will be a field/button display to upload an excel file that will be generated into docx, here the user will select the "parent" folder which will contain each "branch" folder.
+
+in each branch folder there will be eService, eBranch and Star Teller folders, and the application will search and select the result.xlsx file in each eService, eBranch and Star Teller folder in each selected branch folder, if not found, the process will be skipped and continue to the next folder, until all "branch" folders have been read and find the result file in each eService, eBranch and Star Teller folder
+
+then there will be a field/button to upload a word file that will be the master template or container of the docx that will be processed.
+
+all excel that has been found in each sub folder, for example the following excel.
+
+in the selected master word template, there will be several variables that will be replaced with the value of the selected excel.
+
+There are 3 parts in the word template master.
+
+the first part is taken from the eService folder,
+list variable:
+esv_ptg_avg is filled with the value from the sheet result data column b2,
+
+esv_ptg_min is filled with the value from the sheet result data column b4
+
+esv_trx_min is filled with the value from the sheet result data column c4
+
+esv_trx_avg is filled with the value from the sheet result data column c5
+
+esv_trx_10 is filled with the value from the sheet "transaction simulation" column b2
+
+esv_trx_20 is filled with the value from the sheet "transaction simulation" column b3
+
+esv_trx_30 is filled with the value from the sheet "transaction simulation" column b4
+
+esv_trx_60 is filled with the value from the sheet "transaction simulation" column b5
+
+esv_trx_90 is filled with the value from the sheet "transaction simulation" column b6
+
+esv_trx_120 is filled with the value from the sheet "transaction simulation" column b7
+
+esv_trx_180 is filled with the value from the sheet "transaction simulation" column b8
+
+esv_trx_240 is filled with the value from the sheet "transaction simulation" column b9
+
+the second part is taken from the eBranch folder,
+list variables:
+ebr_ptg_avg is filled with the value from the sheet result data column b2,
+
+ebr_ptg_min is filled with the value from the sheet result data column b4
+
+ebr_trx_min is filled with the value from the sheet result data column c4
+
+ebr_trx_avg is filled with the value from the sheet result data column c5
+
+ebr_trx_10 is filled with the value from the sheet "transaction simulation" column b2
+
+ebr_trx_20 is filled with the value from the sheet "transaction simulation" column b3
+
+ebr_trx_30 is filled with the value from the sheet "transaction simulation" column b4
+
+ebr_trx_60 is filled with the value from the sheet "transaction simulation" column b5
+
+ebr_trx_90 is filled with the value from the sheet "transaction simulation" column b6
+
+ebr_trx_120 is filled with the value from the sheet "transaction simulation" column b7
+
+ebr_trx_180 is filled with the value from the sheet "transaction simulation" column b8
+
+ebr_trx_240 is filled with the value from the sheet "transaction simulation" column b9
+
+the third part is taken from the Star Teller folder,
+list variable:
+str_ptg_avg is filled with the value from the sheet result data column b2,
+
+str_ptg_min is filled with the value from the sheet result data column b4
+
+str_trx_min is filled with the value from the sheet result data column c4
+
+str_trx_avg is filled with the value from the sheet result data column c5
+
+str_trx_10 is filled with the value from the sheet "transaction simulation" column b2
+
+str_trx_20 is filled with the value from the sheet "transaction simulation" column b3
+
+str_trx_30 is filled with the value from the sheet "transaction simulation" column b4
+
+str_trx_60 is filled with the value from the sheet "transaction simulation" column b5
+
+str_trx_90 is filled with the value from the sheet "transaction simulation" column b6
+
+str_trx_120 is filled with the value from the sheet "transaction simulation" column b7
+
+str_trx_180 is filled with value from sheet "transaction simulation" column b8
+
+str_trx_240 is filled with the value from sheet "transaction simulation" column b9
+
+after processing is running, the generated word file will be saved in each branch folder with the title "Utilization Report (branch_name) 2025"
+
+
+KCU Banyuwangi/
+├── KCP Wates/
+│   ├── eService/
+│   │   └── result.xlsx
+│   ├── eBranch/
+│   │   └── result.xlsx
+│   └── Star Teller/
+│       └── result.xlsx
+├── KCP Wlingi/
+    ├── eService/
+    │   └── result.xlsx
+    ├── eBranch/
+    │   └── result.xlsx
+    └── Star Teller/
+        └── result.xlsx

@@ -260,8 +260,8 @@ class DataProcessorApp:
             now_str = datetime.now().strftime("%d %B %Y")
             result_ws.append([f"Presentase per {now_str}", pct(avg_pct), ""])
             result_ws.append(["Target", pct(0.85), ""])
-            result_ws.append(["Kekurangan transaksi", pct(gap), str(need_trx)])
-            result_ws.append(["Rata-rata transaksi harian", "", str(round(avg_trx))])
+            result_ws.append(["Kekurangan transaksi", pct(gap), num(need_trx)])
+            result_ws.append(["Rata-rata transaksi harian", "", num(avg_trx)])
 
             for row in result_ws.iter_rows(min_row=2, max_col=3):
                 for c in row: c.border = border
@@ -271,7 +271,7 @@ class DataProcessorApp:
             for c in sim_ws[1]: c.font = bold; c.border = border
 
             for days in [10, 20, 30, 60, 90, 120, 180, 240]:
-                sim_trx = need_trx + math.ceil(avg_trx / days)
+                sim_trx = avg_trx + (need_trx / days)
                 sim_ws.append([days, num(sim_trx)])
 
             for row in sim_ws.iter_rows(min_row=2, max_col=2):
