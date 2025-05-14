@@ -15,12 +15,6 @@
 
 ---
 
-## 📊 Repository Insights
-
-> Visual breakdown of component counts in this repository.
-
----
-
 ## 🖼️ App Previews
 
 | App Name        | Screenshot                                 |
@@ -30,27 +24,6 @@
 | Excel Tool       |         |
 
 > 📌 Replace these placeholder images with real app screenshots to showcase your tools.
-
----
-
-## 📁 Directory Structure
-
-Dev-Apps/
-├── Apps/
-│ ├── FolderCreator/
-│ ├── ReportGenerator/
-├── Script/
-│ ├── rename_tool.py
-│ ├── excel_combiner.py
-├── assets/
-│ ├── banner.png
-│ ├── features_chart.png
-│ ├── folder_app.png
-│ ├── report_app.png
-│ ├── excel_tool.png
-├── Documentation.txt
-├── notifications_log.csv
-
 ---
 
 ## ⚙️ Built With
