@@ -481,3 +481,6 @@ KCU Banyuwangi/
         └── result.xlsx
 
 pyinstaller --onefile --windowed your_script_name.py
+
+give me documentation detil for this code please, into txt or docx file,
+creative documentation and clean code
