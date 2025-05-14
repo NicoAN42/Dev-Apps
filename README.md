@@ -8,10 +8,11 @@
 
 | Component              | Description                                    |
 |------------------------|------------------------------------------------|
-| `Apps/`                | GUI applications for file, report, and data tasks |
+| `Apps Galery/`                | GUI applications for file, report, and data tasks |
 | `Script/`              | Python utilities to automate repetitive jobs  |
-| `Documentation.txt`    | Setup guides and app usage instructions       |
-| `notifications_log.csv`| Logged events and status updates              |
+| `Documentation/`    | Setup guides and app usage instructions       |
+| `Template Create Folder/`| List of folder creation templates              |
+| `Startup/`| Applications that can be run in sequence              |
 
 ---
 
