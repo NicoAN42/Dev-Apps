@@ -484,3 +484,51 @@ pyinstaller --onefile --windowed your_script_name.py
 
 give me documentation detil for this code please, into txt or docx file,
 creative documentation and clean code
+
+
+==========
+MyBCA Portal : https://mybcaportal/
+DEA : https://dea.intra.bca.co.id/#/
+EBI	: https://kpportebi.intra.bca.co.id/
+ET Client : https://et.bca.co.id/BCAclient.html
+FIRE : https://bcaremit.klikbca.com:8008/LoginAction.do;jsessionid=op3SB324AAj6FIajI6WAZ8En2mAkXoW611o6e6OBzskOWUiT0U7O!55461711
+GISTA : https://gista.bca.co.id/auth/realms/gista/protocol/openid-connect/auth?client_id=gista-fe&redirect_uri=https%3A%2F%2Fgista.bca.co.id%2F&state=163d80a8-5f3b-480e-b755-c35a2cf8e714&response_mode=fragment&response_type=code&scope=openid&nonce=6bacf969-2442-4dbe-85cf-6b3960e0ff84
+ID Gov : https://idgovernance/login.jsf?prompt=true
+JIRA : https://jira.bca.co.id/
+Kirana : https://digitalab.bca.co.id/Kirana/
+Magenta : https://magenta.intra.bca.co.id:55204/magenta/login
+Monica : https://monica.bca.co.id/momo/#/login?navigate=%2Fhome
+Monita : https://monita.intra.bca.co.id/auth/login?client_id=monita-public&redirect_uri=https://monita.intra.bca.co.id/callback&response_type=code&scope=openid%20profile%20offline_access&nonce=c1fab988ede6fc677ac297ec986d33ec280d96U8E&state=7957f3e029ea58887aa6c4b065686818d2neaA0U3&code_challenge=eS8G1bv3xw43gH2QTO0gFPXd-Vi6M2_A7mFYFZvq3Qw&code_challenge_method=S256
+KPMSS ESS : https://kpmssess.intra.bca.co.id/
+eRequest : https://mybcaportal/sites/eRequest/Pages/Homepage.aspx
+Tracking System : https://mybcaportal/sites/tracking/Pages/Homepage.aspx
+Tracking EDC QRIS : https://mybcaportal/sites/trackingedc/Pages/Homepage.aspx
+SPECTA : https://specta.intra.bca.co.id/login
+RONA : https://ronaadm.intra.bca.co.id/landing
+SEAL : https://digitalab.bca.co.id/SEAL/
+ORMIS : https://newormis.intra.bca.co.id/login
+Optinet Valas : https://optivalas/optinet/
+Optinet Opticash : https://opticash/optinet/#/
+Optivalas Cash : https://optivalas/opticash/
+Opticash : https://opticash/opticash/#/
+POL Branch2020 : https://mybcaportal/Pages/landingpageprojects.aspx
+BC Portal : https://mybcaportal/sites/mr/BusinessContinuityCrisis/Business%20Continuity/BC%20Portal/index.html
+KM Center : https://mybcaportal/sites/kmc/pages/homepage.aspx
+SK Suku Bunga : https://mybcaportal/sites/mybcasites/SK%20Suku%20Bunga/Forms/AllItems.aspx
+GPOL : https://mybcaportal/sites/op/Pages/home.aspx
+ARI : https://bca-ari.intra.bca.co.id:58066/lbu/#/login
+BDS Web : https://bdsweb8.intra.bca.co.id/login.jsp
+BDS Web GEN 2 : https://bdswebg2.intra.bca.co.id/#/auth/login
+CRM Cabang : https://bcacrmcabang.intra.bca.co.id:15312/Login/Index
+Bank Trade : https://btradeappl.intra.bca.co.id/ucgps/_banktrade.html
+CAMS : https://cams:50024/LoginAction.do;jsessionid=60jSBsAsBc55SbGw561e5IhiIL2Hw_WxOdAXuACkjJI4h9w4xzs-!-1691658497
+CCMS : https://ccms:55044/ccms/index.do
+CCOS : https://ccos:50014/icos-cl/index.do
+CCOS BCA-PL : https://ccos:50014/icos-cl/indexpl.do
+HC Inspire : https://hcinspire.bca.co.id/auth/realms/zrea_hcinspire/protocol/openid-connect/auth?client_id=zcli_portal&redirect_uri=https%3A%2F%2Fhcinspire.bca.co.id%2F%23%2F&state=33a8fa3e-0bfc-41a8-91a2-4ced3920ca65&response_mode=fragment&response_type=code&scope=openid&nonce=dce897c7-d70a-47c0-8b4c-a64506b10903
+MyVideo : https://myvideo.bca.co.id/
+MC2 : https://mc2.bca.co.id/
+DIAN Dashboard : https://mydashboard.intra.bca.co.id/extensions/homepage/homepage.html?qlikTicket=BZp4NfTVUcLuHoz.
+PAKAR : https://pakar.intra.bca.co.id/auth/login?redirect=%2Fhomepage
+Formulir : https://mybcaportal/sites/FORMULIR/Pages/All-Formulir.aspx
+SK/SE : https://mybcaportal/sites/skse/Pages/All-SKSE.aspx
