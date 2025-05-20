@@ -532,3 +532,48 @@ DIAN Dashboard : https://mydashboard.intra.bca.co.id/extensions/homepage/homepag
 PAKAR : https://pakar.intra.bca.co.id/auth/login?redirect=%2Fhomepage
 Formulir : https://mybcaportal/sites/FORMULIR/Pages/All-Formulir.aspx
 SK/SE : https://mybcaportal/sites/skse/Pages/All-SKSE.aspx
+
+
+##########
+cash_depo
+
+Welcoming Page !
+
+Ada 2 tab,
+Deposit,
+Walkthrough
+
+
+[Deposit]
+Show Date (today)
+
+#Field :
+	User ID
+	SEAL Number
+
+	Table Input Denom :
+	100
+	75
+	50
+	20
+	10
+	5
+	2
+	1
+	STAR
+
+
+#Show Data Table
+	 	100 | 75 | 50 | 20 | 10 | 5 | 2 | 1 | STAR	Total 
+USER-SEAL							
+
+#Summary
+		100 | 75 | 50 | 20 | 10 | 5 | 2 | 1 | STAR
+Total Nominal	
+Lembar
+
+#Final Result
+Grand Total :
+
+
+Copyright @ Nico Ardian SOW 7 - 2025
