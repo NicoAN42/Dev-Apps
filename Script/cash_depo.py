@@ -10,8 +10,8 @@ class CashDepositApp:
         self.root.title("Cash Deposit v1.0.0")
         self.style = Style("flatly")
 
-        # Center the window
-        w, h = 800, 600
+        # Adjust window size based on content
+        w, h = 1000, 700
         sw = root.winfo_screenwidth()
         sh = root.winfo_screenheight()
         x = (sw - w) // 2
@@ -52,7 +52,7 @@ class CashDepositApp:
         denom_labels = ["100", "75", "50", "20", "10", "5", "2", "1", "STAR"]
         for i, label in enumerate(denom_labels):
             ttk.Label(denom_frame, text=label).grid(row=0, column=i, padx=5, pady=5)
-            entry = ttk.Entry(denom_frame, width=5)
+            entry = ttk.Entry(denom_frame, width=10)
             entry.grid(row=1, column=i, padx=5, pady=5)
             self.denom_fields[label] = entry
 
@@ -60,16 +60,26 @@ class CashDepositApp:
         submit_button = ttk.Button(self.root, text="Submit", command=self.submit_data)
         submit_button.pack(pady=10)
 
-        # Table section
+        # Table section with scrollbar
         table_frame = ttk.Labelframe(self.root, text="Show Table Data", padding=10)
         table_frame.pack(fill='both', expand=True, padx=10, pady=10)
 
         columns = ("USER-SEAL", "100", "75", "50", "20", "10", "5", "2", "1", "STAR", "Total")
         self.tree = ttk.Treeview(table_frame, columns=columns, show='headings')
+
         for col in columns:
             self.tree.heading(col, text=col)
-            self.tree.column(col, anchor='center')
-        self.tree.pack(fill='both', expand=True)
+            self.tree.column(col, anchor='center', width=80)
+
+        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        hsb = ttk.Scrollbar(table_frame, orient="horizontal", command=self.tree.xview)
+        self.tree.configure(yscroll=vsb.set, xscroll=hsb.set)
+        self.tree.grid(row=0, column=0, sticky='nsew')
+        vsb.grid(row=0, column=1, sticky='ns')
+        hsb.grid(row=1, column=0, sticky='ew')
+
+        table_frame.rowconfigure(0, weight=1)
+        table_frame.columnconfigure(0, weight=1)
 
         # Footer
         footer = ttk.Label(self.root, text="@ Nico Ardian Nugroho SOW 7 - 2025", font=("Helvetica", 9))
