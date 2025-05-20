@@ -16,20 +16,54 @@ class CashDepositApp:
         self.root.title("Cash Deposit v1.0.0")
         self.style = Style("flatly")
 
-        w, h = 1200, 850
-        sw = root.winfo_screenwidth()
-        sh = root.winfo_screenheight()
-        x = (sw - w) // 2
-        y = (sh - h) // 2
-        root.geometry(f"{w}x{h}+{x}+{y}")
-
+        self.resize_window(1200, 850)
         self.toast = ToastNotification(title="Welcome", message="Selamat datang di Cash Deposit",
                                        duration=3000, bootstyle="info")
         self.toast.show_toast()
 
         self.deleted_row = None
+        self.create_menu()
         self.build_ui()
         self.update_clock()
+        self.root.bind("<F11>", lambda e: self.toggle_fullscreen())
+
+    def resize_window(self, w, h):
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
+
+    def create_menu(self):
+        menubar = tk.Menu(self.root)
+
+        view_menu = tk.Menu(menubar, tearoff=0)
+        view_menu.add_command(label="1000x700", command=lambda: self.resize_window(1000, 700))
+        view_menu.add_command(label="1200x800", command=lambda: self.resize_window(1200, 800))
+        view_menu.add_command(label="1400x850", command=lambda: self.resize_window(1400, 850))
+        view_menu.add_command(label="1600x900", command=lambda: self.resize_window(1600, 900))
+        view_menu.add_separator()
+
+        scale_menu = tk.Menu(view_menu, tearoff=0)
+        for scale in [1.0, 1.25, 1.5, 1.75]:
+            scale_label = f"{int(scale * 100)}%"
+            scale_menu.add_command(label=scale_label, command=lambda s=scale: self.set_scaling(s))
+        view_menu.add_cascade(label="Zoom Scale", menu=scale_menu)
+
+        view_menu.add_separator()
+        view_menu.add_command(label="Toggle Fullscreen (F11)", command=self.toggle_fullscreen)
+
+        menubar.add_cascade(label="View", menu=view_menu)
+        self.root.config(menu=menubar)
+
+    def set_scaling(self, scale):
+        self.style.master.tk.call('tk', 'scaling', scale)
+        self.toast = ToastNotification(title="Zoom Changed", message=f"UI scale set to {int(scale * 100)}%", bootstyle="info")
+        self.toast.show_toast()
+
+    def toggle_fullscreen(self):
+        is_fullscreen = self.root.attributes('-fullscreen')
+        self.root.attributes('-fullscreen', not is_fullscreen)
 
     def build_ui(self):
         date_frame = ttk.Frame(self.root, padding=10)
@@ -167,7 +201,6 @@ class CashDepositApp:
                 converted.append(str(lembar))
 
         self.money_tree.insert("", "end", values=[user_seal] + converted + [formatted_total])
-
         self.toast = ToastNotification(title="Success", message="Data successfully added", bootstyle="success")
         self.toast.show_toast()
 
@@ -220,7 +253,8 @@ class CashDepositApp:
         ws1.title = "Data Setoran Kas"
         ws2 = wb.create_sheet("Lembar Uang")
 
-        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+        thin_border = Border(left=Side(style='thin'), right=Side(style='thin'),
+                             top=Side(style='thin'), bottom=Side(style='thin'))
         bold_font = Font(bold=True)
 
         def write_sheet(tree, ws):
