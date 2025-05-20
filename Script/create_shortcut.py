@@ -19,6 +19,7 @@ WEB_APPS = {
     "CRM Cabang": "https://bcacrmcabang.intra.bca.co.id:15312/Login/Index",
     "DEA": "https://dea.intra.bca.co.id/#/",
     "DIAN Dashboard": "https://mydashboard.intra.bca.co.id/extensions/homepage/homepage.html?qlikTicket=BZp4NfTVUcLuHoz.",
+    "Dukcapil" : "https://192.168.94.251/",
     "EBI": "https://kpportebi.intra.bca.co.id/",
     "ET Client": "https://et.bca.co.id/BCAclient.html",
     "FIRE": "https://bcaremit.klikbca.com:8008/LoginAction.do;jsessionid=op3SB324AAj6FIajI6WAZ8En2mAkXoW611o6e6OBzskOWUiT0U7O!55461711",
@@ -28,7 +29,9 @@ WEB_APPS = {
     "HC Inspire": "https://hcinspire.bca.co.id/auth/realms/zrea_hcinspire/protocol/openid-connect/auth?client_id=zcli_portal&redirect_uri=https%3A%2F%2Fhcinspire.bca.co.id%2F%23%2F&state=33a8fa3e-0bfc-41a8-91a2-4ced3920ca65&response_mode=fragment&response_type=code&scope=openid&nonce=dce897c7-d70a-47c0-8b4c-a64506b10903",
     "ID Gov": "https://idgovernance/login.jsf?prompt=true",
     "JIRA": "https://jira.bca.co.id/",
+    "JUPO": "https://jupo:51114/JupoCoreWeb/",
     "Kirana": "https://digitalab.bca.co.id/Kirana/",
+    "Klik BCA" : "www.klikbca.com",
     "KPMSS ESS": "https://kpmssess.intra.bca.co.id/",
     "KM Center": "https://mybcaportal/sites/kmc/pages/homepage.aspx",
     "Magenta": "https://magenta.intra.bca.co.id:55204/magenta/login",
@@ -36,7 +39,11 @@ WEB_APPS = {
     "Monica": "https://monica.bca.co.id/momo/#/login?navigate=%2Fhome",
     "Monita": "https://monita.intra.bca.co.id/auth/login?client_id=monita-public&redirect_uri=https://monita.intra.bca.co.id/callback&response_type=code&scope=openid%20profile%20offline_access&nonce=c1fab988ede6fc677ac297ec986d33ec280d96U8E&state=7957f3e029ea58887aa6c4b065686818d2neaA0U3&code_challenge=eS8G1bv3xw43gH2QTO0gFPXd-Vi6M2_A7mFYFZvq3Qw&code_challenge_method=S256",
     "MyBCA Portal": "https://mybcaportal/",
+    "My Development" : "https://mydevelopment.bca.co.id/",
+    "My Experience" : "https://myxperience.bca.co.id/login/email",
+    "My Growth" : "https://mygrowth.bca.co.id/login/email",
     "MyVideo": "https://myvideo.bca.co.id/",
+    "My Solution" : "https://hcinspire.bca.co.id/auth/realms/zrea_hcinspire/protocol/openid-connect/auth?client_id=zcli_frontend&redirect_uri=https%3A%2F%2Fmysolution.bca.co.id%2F%23%2F&state=e0b65e12-cb74-407f-89a7-12ee80f9d27b&response_mode=fragment&response_type=code&scope=openid&nonce=064a4a74-7918-42ac-8667-1715fb3682bb",
     "Opticash": "https://opticash/opticash/#/",
     "Optinet Opticash": "https://opticash/optinet/#/",
     "Optinet Valas": "https://optivalas/optinet/",
@@ -100,7 +107,7 @@ style.configure("TLabel", font=("Segoe UI", 16, "bold"))
 style.configure("TButton", font=("Segoe UI", 12, "bold"), padding=10)
 
 root = style.master
-root.title("BCA Web App Shortcut Creator")
+root.title("BCA Web App Shortcut Creator v1.0.1")
 center_window(root)
 
 root.configure(bg=style.colors.bg)  # use theme background
