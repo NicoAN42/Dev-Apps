@@ -3,6 +3,9 @@ from tkinter import ttk
 from ttkbootstrap import Style
 from ttkbootstrap.toast import ToastNotification
 from datetime import datetime
+import locale
+
+locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
 
 class CashDepositApp:
     def __init__(self, root):
@@ -69,7 +72,7 @@ class CashDepositApp:
 
         for col in columns:
             self.tree.heading(col, text=col)
-            self.tree.column(col, anchor='center', width=80)
+            self.tree.column(col, anchor='center', width=100)
 
         vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         hsb = ttk.Scrollbar(table_frame, orient="horizontal", command=self.tree.xview)
@@ -97,8 +100,16 @@ class CashDepositApp:
             self.toast.show_toast()
             return
 
-        total = sum([int(k) * v if k.isdigit() else v for k, v in zip(self.denom_fields.keys(), values)])
-        self.tree.insert("", "end", values=[user_seal] + values + [total])
+        nominal_values = []
+        total = 0
+        for k, v in zip(self.denom_fields.keys(), values):
+            multiplier = int(k) if k.isdigit() else 1
+            amount = v * multiplier
+            nominal_values.append(locale.currency(amount, grouping=True))
+            total += amount
+
+        total_formatted = locale.currency(total, grouping=True)
+        self.tree.insert("", "end", values=[user_seal] + nominal_values + [total_formatted])
 
         self.toast = ToastNotification(title="Success", message="Data successfully added", bootstyle="success")
         self.toast.show_toast()
