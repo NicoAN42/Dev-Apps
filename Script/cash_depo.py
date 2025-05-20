@@ -27,6 +27,7 @@ class CashDepositApp:
                                        duration=3000, bootstyle="info")
         self.toast.show_toast()
 
+        self.deleted_row = None
         self.build_ui()
         self.update_clock()
 
@@ -89,6 +90,7 @@ class CashDepositApp:
 
         ttk.Button(button_frame, text="Delete Selected", command=self.delete_selected_row).pack(side='left', padx=5)
         ttk.Button(button_frame, text="Clear All", command=self.clear_all).pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Undo Delete", command=self.undo_delete).pack(side='left', padx=5)
         ttk.Button(button_frame, text="Export to Excel", command=self.export_to_excel).pack(side='left', padx=5)
 
         table_frame.rowconfigure(0, weight=1)
@@ -158,7 +160,18 @@ class CashDepositApp:
         selected = self.tree.selection()
         if selected:
             if messagebox.askyesno("Confirm", "Are you sure you want to delete the selected row?"):
+                self.deleted_row = (selected[0], self.tree.item(selected[0])['values'])
                 self.tree.delete(selected)
+                self.toast = ToastNotification(title="Deleted", message="Row has been deleted.", bootstyle="warning")
+                self.toast.show_toast()
+
+    def undo_delete(self):
+        if self.deleted_row:
+            iid, values = self.deleted_row
+            self.tree.insert("", "end", iid=iid, values=values)
+            self.toast = ToastNotification(title="Undo", message="Last deletion has been undone.", bootstyle="info")
+            self.toast.show_toast()
+            self.deleted_row = None
 
     def clear_all(self):
         if not messagebox.askyesno("Confirm", "Are you sure you want to clear all inputs and table data?"):
@@ -170,6 +183,8 @@ class CashDepositApp:
             entry.delete(0, tk.END)
         for row in self.tree.get_children():
             self.tree.delete(row)
+        self.toast = ToastNotification(title="Cleared", message="All data has been cleared.", bootstyle="danger")
+        self.toast.show_toast()
 
     def export_to_excel(self):
         file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
