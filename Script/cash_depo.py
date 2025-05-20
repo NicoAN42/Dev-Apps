@@ -88,6 +88,7 @@ class CashDepositApp:
         button_frame.grid(row=2, column=0, pady=10, sticky='e')
 
         ttk.Button(button_frame, text="Delete Selected", command=self.delete_selected_row).pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Clear All", command=self.clear_all).pack(side='left', padx=5)
         ttk.Button(button_frame, text="Export to Excel", command=self.export_to_excel).pack(side='left', padx=5)
 
         table_frame.rowconfigure(0, weight=1)
@@ -156,7 +157,19 @@ class CashDepositApp:
     def delete_selected_row(self):
         selected = self.tree.selection()
         if selected:
-            self.tree.delete(selected)
+            if messagebox.askyesno("Confirm", "Are you sure you want to delete the selected row?"):
+                self.tree.delete(selected)
+
+    def clear_all(self):
+        if not messagebox.askyesno("Confirm", "Are you sure you want to clear all inputs and table data?"):
+            return
+
+        self.user_id_entry.delete(0, tk.END)
+        self.seal_number_entry.delete(0, tk.END)
+        for entry in self.denom_fields.values():
+            entry.delete(0, tk.END)
+        for row in self.tree.get_children():
+            self.tree.delete(row)
 
     def export_to_excel(self):
         file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")])
