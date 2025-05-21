@@ -579,3 +579,6 @@ Grand Total :
 Copyright @ Nico Ardian SOW 7 - 2025
 
 C:\Users\nicoa\AppData\Local\Programs\Python\Python310\Lib
+
+pyinstaller --onefile --windowed --version-file=apps_version.txt network_scanner.py
+pyinstaller --onefile --windowed network_scanner.py
