@@ -11,7 +11,7 @@ import pandas as pd
 import ttkbootstrap as tb
 from ttkbootstrap.toast import ToastNotification
 
-# OUI dictionary
+# OUI dictionary for vendors
 OUI_DICT = {
     "00:1A:79": "Cisco Systems",
     "00:1B:44": "Dell Inc",
@@ -33,7 +33,7 @@ def get_mac_address(ip):
             ["arp", "-a", ip],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         out, _ = pid.communicate(timeout=3)
         out = out.decode(errors="ignore")
@@ -51,23 +51,24 @@ def get_hostname(ip):
 
 def get_last_login_windows(host, username, password):
     try:
+        # PowerShell command to get last login from remote host
         ps_command = f"""
-$secpasswd = ConvertTo-SecureString '{password}' -AsPlainText -Force
-$cred = New-Object System.Management.Automation.PSCredential('{username}', $secpasswd)
-$user = Get-WmiObject -Class Win32_NetworkLoginProfile -ComputerName {host} -Credential $cred -ErrorAction SilentlyContinue |
-Sort-Object -Property LastLogon -Descending | Select-Object -First 1
-if ($user -and $user.LastLogon) {{
-    [DateTime]::FromFileTime($user.LastLogon).ToString("yyyy-MM-dd HH:mm:ss")
-}} else {{
-    "Never"
-}}
-"""
+        $secpasswd = ConvertTo-SecureString "{password}" -AsPlainText -Force
+        $cred = New-Object System.Management.Automation.PSCredential("{username}", $secpasswd)
+        $user = Get-WmiObject -Class Win32_NetworkLoginProfile -ComputerName {host} -Credential $cred -ErrorAction SilentlyContinue |
+            Sort-Object -Property LastLogon -Descending | Select-Object -First 1
+        if ($user -and $user.LastLogon) {{
+            [DateTime]::FromFileTime($user.LastLogon).ToString("yyyy-MM-dd HH:mm:ss")
+        }} else {{
+            "Never"
+        }}
+        """
         completed = subprocess.run(
             ["powershell", "-Command", ps_command],
             capture_output=True,
             text=True,
             timeout=10,
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         login = completed.stdout.strip()
         return login if login else "N/A"
@@ -77,16 +78,16 @@ if ($user -and $user.LastLogon) {{
 def get_serial_number_windows(host, username, password):
     try:
         ps_command = f"""
-$secpasswd = ConvertTo-SecureString '{password}' -AsPlainText -Force
-$cred = New-Object System.Management.Automation.PSCredential('{username}', $secpasswd)
-(Get-WmiObject -Class Win32_BIOS -ComputerName {host} -Credential $cred -ErrorAction SilentlyContinue).SerialNumber
-"""
+        $secpasswd = ConvertTo-SecureString "{password}" -AsPlainText -Force
+        $cred = New-Object System.Management.Automation.PSCredential("{username}", $secpasswd)
+        (Get-WmiObject -Class Win32_BIOS -ComputerName {host} -Credential $cred -ErrorAction SilentlyContinue).SerialNumber
+        """
         completed = subprocess.run(
             ["powershell", "-Command", ps_command],
             capture_output=True,
             text=True,
             timeout=10,
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         serial = completed.stdout.strip()
         return serial if serial and serial != "System Serial Number" else "N/A"
@@ -104,10 +105,11 @@ def ping_host(ip):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
         )
         if result.returncode == 0:
-            match = re.search(r'time[=<]\s*(\d+\.?\d*)\s*ms', result.stdout)
+            # Regex to extract ping time in ms
+            match = re.search(r"time[=<]\s*(\d+\.?\d*)\s*ms", result.stdout)
             return float(match.group(1)) if match else 0
         return None
     except Exception:
@@ -180,6 +182,7 @@ def scan_subnet(subnet, status_var, tree, results, progress_var, stop_event, btn
     status_var.set("Scan stopped by user." if stop_event.is_set() else "Scan completed.")
     btn_scan.config(state=tk.NORMAL)
     btn_stop.config(state=tk.DISABLED)
+    stop_event.clear()
 
 def ping_test(ip, ping_status_var, ping_progress_var, btn_ping):
     if not ip:
@@ -221,98 +224,134 @@ def main():
     center_window(root, 1200, 750)
     root.minsize(1000, 650)
 
+    # Fullscreen toggle variables and functions
+    root.fullscreen = False
+    def toggle_fullscreen(event=None):
+        root.fullscreen = not root.fullscreen
+        root.attributes("-fullscreen", root.fullscreen)
+
+    def exit_fullscreen(event=None):
+        if root.fullscreen:
+            root.fullscreen = False
+            root.attributes("-fullscreen", False)
+
+    root.bind("<F11>", toggle_fullscreen)
+    root.bind("<Escape>", exit_fullscreen)
+
     results = []
     stop_event = threading.Event()
 
     frm_top = tb.LabelFrame(root, text="Subnet Scan", padding=15)
     frm_top.pack(fill=tk.X, padx=10, pady=10)
 
-    tb.Label(frm_top, text="Subnet (CIDR):", font=("Segoe UI", 11)).grid(row=0, column=0, padx=5, pady=5)
+    lbl_subnet = tb.Label(frm_top, text="Subnet (CIDR):", font=("Segoe UI", 11))
+    lbl_subnet.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
     entry_subnet = tb.Entry(frm_top, width=25, font=("Segoe UI", 11))
     entry_subnet.insert(0, "192.168.1.0/24")
-    entry_subnet.grid(row=0, column=1, padx=5, pady=5)
+    entry_subnet.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-    # Username and Password side-by-side
-    tb.Label(frm_top, text="User Admin:", font=("Segoe UI", 11)).grid(row=0, column=2, padx=(20,5), pady=5, sticky="e")
-    entry_username = tb.Entry(frm_top, width=20, font=("Segoe UI", 11))
-    entry_username.grid(row=0, column=3, padx=5, pady=5)
+    # Username and Password side by side
+    lbl_username = tb.Label(frm_top, text="Admin Username:", font=("Segoe UI", 11))
+    lbl_username.grid(row=0, column=2, padx=(15,5), pady=5, sticky="w")
 
-    tb.Label(frm_top, text="Password Admin:", font=("Segoe UI", 11)).grid(row=0, column=4, padx=(20,5), pady=5, sticky="e")
-    entry_password = tb.Entry(frm_top, width=20, font=("Segoe UI", 11), show="*")
-    entry_password.grid(row=0, column=5, padx=5, pady=5)
+    entry_username = tb.Entry(frm_top, width=15, font=("Segoe UI", 11))
+    entry_username.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
 
-    show_password = tk.BooleanVar(value=False)
-    chk_show = tb.Checkbutton(frm_top, text="Show Password", variable=show_password, 
-                              command=lambda: entry_password.config(show="" if show_password.get() else "*"))
-    chk_show.grid(row=0, column=6, padx=10, pady=5)
+    lbl_password = tb.Label(frm_top, text="Password:", font=("Segoe UI", 11))
+    lbl_password.grid(row=0, column=4, padx=(15,5), pady=5, sticky="w")
+
+    entry_password = tb.Entry(frm_top, width=15, font=("Segoe UI", 11), show="*")
+    entry_password.grid(row=0, column=5, padx=5, pady=5, sticky="ew")
 
     btn_scan = tb.Button(frm_top, text="Start Scan", width=12)
-    btn_scan.grid(row=1, column=1, padx=5, pady=10)
+    btn_scan.grid(row=0, column=6, padx=15, pady=5)
 
     btn_stop = tb.Button(frm_top, text="Stop Scan", state=tk.DISABLED, width=12)
-    btn_stop.grid(row=1, column=2, padx=5, pady=10)
+    btn_stop.grid(row=0, column=7, padx=5, pady=5)
 
     btn_export = tb.Button(frm_top, text="Export Results to Excel", width=20)
-    btn_export.grid(row=1, column=3, padx=5, pady=10)
+    btn_export.grid(row=0, column=8, padx=15, pady=5)
+
+    frm_top.columnconfigure(1, weight=1)
+    frm_top.columnconfigure(3, weight=1)
+    frm_top.columnconfigure(5, weight=1)
 
     progress_var = tk.IntVar()
-    tb.Progressbar(frm_top, maximum=100, variable=progress_var, bootstyle="info-striped").grid(row=2, column=0, columnspan=7, sticky="ew", padx=5, pady=(0, 10))
+    progress = tb.Progressbar(frm_top, maximum=100, variable=progress_var, bootstyle="info-striped")
+    progress.grid(row=1, column=0, columnspan=9, sticky="ew", pady=(0,10))
 
     status_var = tk.StringVar(value="Idle")
-    tb.Label(frm_top, textvariable=status_var, font=("Segoe UI", 10, "italic")).grid(row=3, column=0, columnspan=7, sticky="w", padx=5, pady=5)
+    lbl_status = tb.Label(frm_top, textvariable=status_var, font=("Segoe UI", 10, "italic"))
+    lbl_status.grid(row=2, column=0, columnspan=9, sticky="w")
 
-    frm_results = tb.LabelFrame(root, text="Scan Results", padding=15)
-    frm_results.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    # Treeview for results
+    columns = ("IP Address", "Hostname", "MAC Address", "Vendor", "Last Login", "Serial Number")
+    tree = tb.Treeview(root, columns=columns, show="headings", selectmode="browse")
+    tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    columns = ("IP", "Hostname", "MAC Address", "Vendor", "Last Login", "Serial Number")
-    tree = tb.Treeview(frm_results, columns=columns, show="headings", selectmode="browse")
     for col in columns:
         tree.heading(col, text=col)
-        tree.column(col, anchor="center", width=150)
-    tree.pack(fill=tk.BOTH, expand=True)
+        tree.column(col, anchor=tk.CENTER, width=120)
 
+    # Ping test frame
     frm_ping = tb.LabelFrame(root, text="Ping Test", padding=15)
     frm_ping.pack(fill=tk.X, padx=10, pady=10)
 
-    tb.Label(frm_ping, text="IP Address:", font=("Segoe UI", 11)).grid(row=0, column=0, padx=5, pady=5)
-    entry_ip = tb.Entry(frm_ping, width=25, font=("Segoe UI", 11))
-    entry_ip.grid(row=0, column=1, padx=5, pady=5)
+    lbl_ping_ip = tb.Label(frm_ping, text="IP to Ping:", font=("Segoe UI", 11))
+    lbl_ping_ip.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    entry_ping_ip = tb.Entry(frm_ping, width=25, font=("Segoe UI", 11))
+    entry_ping_ip.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
     btn_ping = tb.Button(frm_ping, text="Ping", width=12)
-    btn_ping.grid(row=0, column=2, padx=5, pady=5)
+    btn_ping.grid(row=0, column=2, padx=10, pady=5)
 
     ping_status_var = tk.StringVar(value="Idle")
-    tb.Label(frm_ping, textvariable=ping_status_var, font=("Segoe UI", 10, "italic")).grid(row=1, column=0, columnspan=3, sticky="w", padx=5)
+    lbl_ping_status = tb.Label(frm_ping, textvariable=ping_status_var, font=("Segoe UI", 10, "italic"))
+    lbl_ping_status.grid(row=1, column=0, columnspan=3, sticky="w")
 
     ping_progress_var = tk.IntVar()
-    tb.Progressbar(frm_ping, maximum=100, variable=ping_progress_var, bootstyle="success-striped").grid(row=2, column=0, columnspan=3, sticky="ew", padx=5, pady=(0, 5))
+    ping_progress = tb.Progressbar(frm_ping, maximum=100, variable=ping_progress_var, bootstyle="success")
+    ping_progress.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(5,0))
+
+    frm_ping.columnconfigure(1, weight=1)
+
+    # Footer label copyright
+    copyright_lbl = tb.Label(root, text="© Created by Nico Ardian SOW 7 - 2025", font=("Segoe UI", 9), foreground="#666666")
+    copyright_lbl.pack(side=tk.BOTTOM, pady=5)
 
     def start_scan():
-        subnet = entry_subnet.get()
-        user = entry_username.get()
-        pwd = entry_password.get()
+        subnet = entry_subnet.get().strip()
+        user = entry_username.get().strip()
+        pwd = entry_password.get().strip()
+        if not subnet:
+            ToastNotification(title="Error", message="Please enter a subnet to scan.", duration=2500, bootstyle="danger").show()
+            return
         if not user or not pwd:
-            ToastNotification(title="Error", message="Username and Password are required.", duration=2500, bootstyle="danger").show()
+            ToastNotification(title="Error", message="Please enter admin username and password.", duration=2500, bootstyle="danger").show()
             return
         btn_scan.config(state=tk.DISABLED)
         btn_stop.config(state=tk.NORMAL)
         stop_event.clear()
-        threading.Thread(target=scan_subnet, args=(subnet, status_var, tree, results, progress_var, stop_event, btn_scan, btn_stop, user, pwd), daemon=True).start()
+        threading.Thread(
+            target=scan_subnet,
+            args=(subnet, status_var, tree, results, progress_var, stop_event, btn_scan, btn_stop, user, pwd),
+            daemon=True
+        ).start()
 
     def stop_scan():
         stop_event.set()
-        btn_stop.config(state=tk.DISABLED)
+        status_var.set("Stopping scan...")
 
-    def do_ping():
-        ip = entry_ip.get()
+    def start_ping():
+        ip = entry_ping_ip.get().strip()
         ping_test(ip, ping_status_var, ping_progress_var, btn_ping)
-
-    def do_export():
-        export_to_excel(results)
 
     btn_scan.config(command=start_scan)
     btn_stop.config(command=stop_scan)
-    btn_ping.config(command=do_ping)
-    btn_export.config(command=do_export)
+    btn_export.config(command=lambda: export_to_excel(results))
+    btn_ping.config(command=start_ping)
 
     root.mainloop()
 
