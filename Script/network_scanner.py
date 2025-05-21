@@ -6,7 +6,7 @@ import subprocess
 import threading
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import ttkbootstrap as tb
 from ttkbootstrap.toast import ToastNotification
@@ -31,7 +31,7 @@ def get_vendor_from_mac(mac):
 def get_mac_address(ip):
     try:
         pid = subprocess.Popen(["arp", "-a", ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = pid.communicate(timeout=3)
+        out, _ = pid.communicate(timeout=3)
         out = out.decode(errors="ignore")
         regex = re.compile(r"([0-9a-f]{2}[:-]){5}([0-9a-f]{2})", re.I)
         mac = regex.search(out)
@@ -51,7 +51,7 @@ def get_hostname(ip):
 def get_last_login_windows(host):
     try:
         ps_command = f"""
-        $user = Get-WmiObject -Class Win32_NetworkLoginProfile -ComputerName {host} | 
+        $user = Get-WmiObject -Class Win32_NetworkLoginProfile -ComputerName {host} -ErrorAction SilentlyContinue | 
                 Sort-Object -Property LastLogon -Descending | Select-Object -First 1
         if ($user -and $user.LastLogon) {{
             [DateTime]::FromFileTime($user.LastLogon).ToString("yyyy-MM-dd HH:mm:ss")
@@ -67,12 +67,13 @@ def get_last_login_windows(host):
 
 def get_serial_number_windows(host):
     try:
+        # Attempt to get BIOS serial number via WMI
         ps_command = f"""
         (Get-WmiObject -Class Win32_BIOS -ComputerName {host} -ErrorAction SilentlyContinue).SerialNumber
         """
         completed = subprocess.run(["powershell", "-Command", ps_command], capture_output=True, text=True, timeout=10)
         serial = completed.stdout.strip()
-        if serial:
+        if serial and serial != "System Serial Number":
             return serial
         else:
             return "N/A"
@@ -81,7 +82,9 @@ def get_serial_number_windows(host):
 
 def ping_host(ip):
     param = "-n" if os.name == "nt" else "-c"
-    command = ["ping", param, "1", "-w", "1000", ip] if os.name == "nt" else ["ping", param, "1", "-W", "1", ip]
+    timeout_param = "-w" if os.name == "nt" else "-W"
+    timeout_val = "1000" if os.name == "nt" else "1"
+    command = ["ping", param, "1", timeout_param, timeout_val, ip]
     try:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if result.returncode == 0:
@@ -121,9 +124,8 @@ def scan_subnet(subnet, status_var, tree, results, progress_var, stop_event, btn
     total_ips = len(ips)
 
     progress_var.set(0)
-    max_threads = 30  # Reduce max threads for safety
+    max_threads = 30
     thread_lock = threading.Lock()
-
     scanned_count = 0
 
     def scan_ip(ip):
@@ -211,7 +213,7 @@ def export_to_excel(results):
 
 def main():
     root = tb.Window(themename="flatly")
-    root.title("Network Scanner")
+    root.title("Device Scanner")
     win_width, win_height = 1200, 750
     root.minsize(1000, 650)
     center_window(root, win_width, win_height)
@@ -256,17 +258,8 @@ def main():
     tree = tb.Treeview(frm_results, columns=columns, show="headings", selectmode="browse")
     for col in columns:
         tree.heading(col, text=col)
-        width = 150
-        if col == "Hostname":
-            width = 220
-        elif col == "Serial Number":
-            width = 160
-        tree.column(col, anchor="center", width=width)
-    tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-    scrollbar = tb.Scrollbar(frm_results, orient=tk.VERTICAL, command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+        tree.column(col, anchor="center", width=150)
+    tree.pack(fill=tk.BOTH, expand=True)
 
     # --- Bottom Frame: Ping Test ---
     frm_ping = tb.LabelFrame(root, text="Ping Test", padding=15)
@@ -296,6 +289,7 @@ def main():
     lbl_footer = tb.Label(frm_footer, text="© Created by Nico Ardian SOW 7 - 2025", anchor="center", font=("Segoe UI", 9, "italic"))
     lbl_footer.pack(fill=tk.X)
 
+    # Button commands
     def on_scan():
         subnet = entry_subnet.get().strip()
         if not subnet:
