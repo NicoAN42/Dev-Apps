@@ -9,6 +9,7 @@ import ipaddress
 import time
 import platform
 import os
+import datetime
 
 class RemoteDeviceApp:
     def __init__(self, root):
@@ -36,6 +37,7 @@ class RemoteDeviceApp:
         self.auto_refresh_thread = None
         self.scan_thread = None
         self.app_scan_thread = None
+        self.scheduled_tasks = []
 
         # Predefined apps
         self.app_paths = {
@@ -120,7 +122,7 @@ class RemoteDeviceApp:
         self.device_listbox.bind("<<ListboxSelect>>", self.on_device_select)
 
         # Scrollbar for device list
-        device_scroll = ttk.Scrollbar(self.device_listbox, orient="vertical", command=self.device_listbox.yview)
+        device_scroll = ttk.Scrollbar(left_frame, orient="vertical", command=self.device_listbox.yview)
         self.device_listbox.config(yscrollcommand=device_scroll.set)
         device_scroll.pack(side="right", fill="y")
 
@@ -143,8 +145,7 @@ class RemoteDeviceApp:
         self.installed_apps_listbox.pack(fill="both", expand=True)
 
         # Scrollbar
-        installed_scroll = ttk.Scrollbar(self.installed_apps_listbox, orient="vertical",
-                                        command=self.installed_apps_listbox.yview)
+        installed_scroll = ttk.Scrollbar(mid_frame, orient="vertical", command=self.installed_apps_listbox.yview)
         self.installed_apps_listbox.config(yscrollcommand=installed_scroll.set)
         installed_scroll.pack(side="right", fill="y")
 
@@ -186,69 +187,41 @@ class RemoteDeviceApp:
         self.log_text = tk.Text(right_frame, height=12, font=("Segoe UI", 9), state="disabled", wrap="word")
         self.log_text.pack(fill="both", expand=True)
 
-        log_btn_frame = tb.Frame(right_frame)
-        log_btn_frame.pack(fill="x", pady=5)
-        tb.Button(log_btn_frame, text="Clear Log", bootstyle="secondary-outline", command=self.clear_log).pack(side="left", fill="x", expand=True, padx=(0,5))
-        tb.Button(log_btn_frame, text="Download Log", bootstyle="secondary-outline", command=self.download_log).pack(side="left", fill="x", expand=True, padx=(5,0))
-
-        # Footer
-        footer = tb.Label(self.root, text="© Nico Ardian SOW 7 - 2025", font=("Segoe UI", 9), bootstyle="muted")
-        footer.pack(side="bottom", pady=5)
-
-    def add_log(self, text, color="black"):
-        self.log_text.configure(state="normal")
-        self.log_text.insert(tk.END, text + "\n")
-        self.log_text.tag_add("lastline", "end-2l", "end-1l")
-        self.log_text.tag_config("lastline", foreground=color)
-        self.log_text.see(tk.END)
-        self.log_text.configure(state="disabled")
-
-    def clear_log(self):
-        self.log_text.configure(state="normal")
-        self.log_text.delete("1.0", tk.END)
-        self.log_text.configure(state="disabled")
-        self.add_log("Log cleared.", "gray")
-
-    def download_log(self):
-        log_content = self.log_text.get("1.0", tk.END)
-        if not log_content.strip():
-            messagebox.showinfo("Download Log", "Log is empty.")
-            return
-        f = filedialog.asksaveasfile(mode='w', defaultextension=".txt",
-                                     filetypes=[("Text files", "*.txt")],
-                                     title="Save Log As")
-        if f:
-            f.write(log_content)
-            f.close()
-            messagebox.showinfo("Download Log", "Log saved successfully.")
+        log_scroll = ttk.Scrollbar(right_frame, orient="vertical", command=self.log_text.yview)
+        self.log_text.config(yscrollcommand=log_scroll.set)
+        log_scroll.pack(side="right", fill="y")
 
     def change_theme(self, theme_name):
         self.style.theme_use(theme_name)
 
+    def log(self, message, color="black"):
+        self.log_text.configure(state="normal")
+        self.log_text.insert("end", f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {message}\n")
+        self.log_text.tag_add(color, "end-2l", "end-1l")
+        self.log_text.tag_config(color, foreground=color)
+        self.log_text.see("end")
+        self.log_text.configure(state="disabled")
+
     def toggle_auto_refresh(self):
         if self.auto_refresh_var.get():
-            try:
-                interval = int(self.auto_refresh_interval.get())
-                if interval < 10:
-                    messagebox.showwarning("Interval too short", "Minimum interval is 10 seconds.")
-                    self.auto_refresh_var.set(False)
-                    return
-            except:
-                messagebox.showwarning("Invalid interval", "Please enter a valid number.")
+            interval = self.auto_refresh_interval.get()
+            if interval < 10:
+                messagebox.showwarning("Interval too low", "Minimum auto-refresh interval is 10 seconds.")
                 self.auto_refresh_var.set(False)
                 return
             self.auto_refresh = True
-            self.add_log(f"Auto-refresh enabled every {interval} seconds.", "green")
-            self.auto_refresh_thread = threading.Thread(target=self.auto_refresh_devices, daemon=True)
+            self.log("Auto refresh enabled.")
+            self.auto_refresh_thread = threading.Thread(target=self.auto_refresh_loop, daemon=True)
             self.auto_refresh_thread.start()
         else:
             self.auto_refresh = False
-            self.add_log("Auto-refresh disabled.", "red")
+            self.log("Auto refresh disabled.")
 
-    def auto_refresh_devices(self):
+    def auto_refresh_loop(self):
         while self.auto_refresh:
-            self.scan_devices()
-            interval = int(self.auto_refresh_interval.get())
+            self.log("Auto-refresh: Discovering devices...")
+            self.start_scan()
+            interval = self.auto_refresh_interval.get()
             for _ in range(interval):
                 if not self.auto_refresh:
                     break
@@ -256,240 +229,211 @@ class RemoteDeviceApp:
 
     def start_scan(self):
         if self.scanning:
-            self.add_log("Scan already running.", "orange")
+            self.log("Scan already in progress.", "red")
             return
         self.scanning = True
         self.scan_btn.config(state="disabled")
         self.stop_scan_btn.config(state="normal")
-        self.add_log("Starting device scan...", "blue")
-        self.device_listbox.delete(0, tk.END)
+        self.device_listbox.delete(0, "end")
         self.devices.clear()
         self.device_ping_status.clear()
-        self.scan_thread = threading.Thread(target=self.scan_devices, daemon=True)
+        self.log("Starting device discovery...")
+
+        self.scan_thread = threading.Thread(target=self.scan_network, daemon=True)
         self.scan_thread.start()
 
     def stop_scan(self):
-        if not self.scanning:
-            self.add_log("No scan running.", "orange")
-            return
-        self.scanning = False
-        self.scan_btn.config(state="normal")
-        self.stop_scan_btn.config(state="disabled")
-        self.add_log("Scan stopped.", "red")
+        if self.scanning:
+            self.scanning = False
+            self.log("Stopping device discovery...")
+            self.scan_btn.config(state="normal")
+            self.stop_scan_btn.config(state="disabled")
 
-    def scan_devices(self):
+    def scan_network(self):
+        # Get local IP and subnet mask
         try:
-            local_ip = self.get_local_ip()
-            subnet = ipaddress.ip_network(local_ip + "/24", strict=False)
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
         except Exception as e:
-            self.add_log(f"Error getting local IP or subnet: {e}", "red")
+            self.log(f"Failed to get local IP: {e}", "red")
             self.scanning = False
             self.scan_btn.config(state="normal")
             self.stop_scan_btn.config(state="disabled")
             return
 
-        found = 0
-        all_ips = list(subnet.hosts())
+        self.log(f"Local IP: {local_ip}")
 
-        for ip in all_ips:
+        # Assume /24 subnet for scanning
+        network = ipaddress.IPv4Network(local_ip + '/24', strict=False)
+        ips = list(network.hosts())
+
+        for ip in ips:
             if not self.scanning:
-                self.add_log("Scan aborted by user.", "red")
                 break
-
             ip_str = str(ip)
-            # Ping test
-            ping_success = self.ping_ip(ip_str)
-            self.device_ping_status[ip_str] = ping_success
-
-            if ping_success:
+            reachable = self.ping(ip_str)
+            self.device_ping_status[ip_str] = reachable
+            if reachable:
                 try:
-                    hostname = socket.gethostbyaddr(ip_str)[0]
-                except:
-                    hostname = ip_str
-                self.devices[hostname] = ip_str
-                self.add_log(f"Device found: {hostname} ({ip_str})", "green")
-                found += 1
-
-            self.update_device_list()
+                    host = socket.gethostbyaddr(ip_str)[0]
+                except socket.herror:
+                    host = ip_str
+                self.devices[host] = ip_str
+                self.root.after(0, self.add_device_to_listbox, host, ip_str, reachable)
+            else:
+                # Optionally, can add unreachable devices with different color
+                pass
 
         self.scanning = False
+        self.root.after(0, self.scan_finished_ui)
+
+    def scan_finished_ui(self):
         self.scan_btn.config(state="normal")
         self.stop_scan_btn.config(state="disabled")
-        self.add_log(f"Device scan complete. Found {found} device(s).", "blue")
+        self.log("Device discovery finished.")
 
-    def get_local_ip(self):
-        # Try a better way to get local IP (cross-platform)
+    def add_device_to_listbox(self, hostname, ip, reachable):
+        # Add device with coloring based on ping
+        display_text = f"{hostname} | {ip} | {'Online' if reachable else 'Offline'}"
+        self.device_listbox.insert("end", display_text)
+        idx = self.device_listbox.size() - 1
+        color = "green" if reachable else "red"
+        self.device_listbox.itemconfig(idx, fg=color)
+
+    def ping(self, ip):
+        param = '-n' if platform.system().lower() == 'windows' else '-c'
+        command = ['ping', param, '1', '-w', '1000', ip] if platform.system().lower() == 'windows' else ['ping', param, '1', '-W', '1', ip]
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            # Doesn't have to be reachable
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
-            return ip
-        except Exception:
-            # fallback to hostname resolution
-            return socket.gethostbyname(socket.gethostname())
-
-    def ping_ip(self, ip):
-        param = "-n" if platform.system().lower() == "windows" else "-c"
-        # Timeout in milliseconds for Windows ping: -w, for Unix -W (in seconds)
-        timeout_param = "-w" if platform.system().lower() == "windows" else "-W"
-        timeout_val = "150" if platform.system().lower() == "windows" else "1"
-
-        cmd = ["ping", param, "1", timeout_param, timeout_val, ip]
-        result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return result.returncode == 0
-
-    def update_device_list(self):
-        filter_text = self.search_var.get().lower()
-        self.device_listbox.delete(0, tk.END)
-
-        for hostname, ip in sorted(self.devices.items()):
-            if filter_text in hostname.lower() or filter_text in ip:
-                ping_status = self.device_ping_status.get(ip, False)
-                display_text = f"{hostname} ({ip})"
-                self.device_listbox.insert(tk.END, display_text)
-                # Color row by ping success
-                if ping_status:
-                    self.device_listbox.itemconfig(tk.END, fg="green")
-                else:
-                    self.device_listbox.itemconfig(tk.END, fg="red")
+            output = subprocess.check_output(command, stderr=subprocess.STDOUT, universal_newlines=True)
+            return True if "TTL=" in output.upper() or "ttl=" in output else False
+        except subprocess.CalledProcessError:
+            return False
 
     def filter_devices(self, *args):
-        self.update_device_list()
+        search_term = self.search_var.get().lower()
+        self.device_listbox.delete(0, "end")
+        for host, ip in self.devices.items():
+            display_text = f"{host} | {ip} | {'Online' if self.device_ping_status.get(ip, False) else 'Offline'}"
+            if search_term in host.lower() or search_term in ip:
+                idx = self.device_listbox.size()
+                self.device_listbox.insert("end", display_text)
+                color = "green" if self.device_ping_status.get(ip, False) else "red"
+                self.device_listbox.itemconfig(idx, fg=color)
 
-    def on_device_select(self, event=None):
-        selection = self.device_listbox.curselection()
-        if not selection:
-            self.selected_device = None
-            self.installed_apps_listbox.delete(0, tk.END)
+    def on_device_select(self, event):
+        if not self.device_listbox.curselection():
             return
-        idx = selection[0]
-        val = self.device_listbox.get(idx)
-        # Extract IP from string (hostname (IP))
-        if "(" in val and ")" in val:
-            ip = val[val.find("(")+1:val.find(")")]
-        else:
-            ip = val
-        self.selected_device = ip
-        self.add_log(f"Selected device: {val}", "blue")
-        self.installed_apps_listbox.delete(0, tk.END)
-        self.installed_apps = []
-        # Start thread to simulate app scan
-        if self.app_scan_thread and self.app_scan_thread.is_alive():
-            return  # Don't scan twice
-        self.app_scan_thread = threading.Thread(target=self.scan_installed_apps, args=(ip,), daemon=True)
-        self.app_scan_thread.start()
+        idx = self.device_listbox.curselection()[0]
+        selection = self.device_listbox.get(idx)
+        hostname = selection.split("|")[0].strip()
+        ip = selection.split("|")[1].strip()
+        self.selected_device = (hostname, ip)
+        self.log(f"Selected device: {hostname} ({ip})")
+        self.load_installed_apps(ip)
 
-    def scan_installed_apps(self, ip):
-        self.add_log(f"Scanning installed apps on {ip}...", "blue")
-        # Dummy delay + dummy apps for demo
-        time.sleep(2)
-        # Dummy installed apps (random subset)
-        apps = ["amcfg.exe", "notepad.exe", "calc.exe", "chrome.exe"]
-        # Just pretend all installed for demo
-        self.installed_apps = apps
-        self.installed_apps_listbox.delete(0, tk.END)
+    def load_installed_apps(self, ip):
+        # For demo, simulate installed apps
+        # In real scenario, this should query remote device for installed apps
+        dummy_apps = ["amcfg.exe", "notepad.exe", "calc.exe", "chrome.exe"]
+        # Randomize to simulate different apps
+        import random
+        self.installed_apps = random.sample(dummy_apps, k=random.randint(1, len(dummy_apps)))
+
+        self.installed_apps_listbox.delete(0, "end")
         for app in self.installed_apps:
-            self.installed_apps_listbox.insert(tk.END, app)
-        self.add_log(f"Installed apps on {ip} loaded.", "green")
+            self.installed_apps_listbox.insert("end", app)
 
     def launch_selected_app(self):
         if not self.selected_device:
-            messagebox.showwarning("No Device Selected", "Please select a device first.")
+            messagebox.showwarning("No device selected", "Please select a device first.")
             return
-        sel = self.installed_apps_listbox.curselection()
-        if not sel:
-            messagebox.showwarning("No App Selected", "Please select an app to launch.")
+        selection = self.installed_apps_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("No app selected", "Please select an app to launch.")
             return
-        app_name = self.installed_apps_listbox.get(sel[0])
-        # Launch app remotely (dummy)
-        self.add_log(f"Launching {app_name} on {self.selected_device}...", "blue")
-        # Simulate remote launch delay
-        threading.Thread(target=self.simulate_remote_launch, args=(app_name,), daemon=True).start()
+        app = self.installed_apps_listbox.get(selection[0])
+        hostname, ip = self.selected_device
+        self.log(f"Launching {app} on {hostname} ({ip})...")
+        threading.Thread(target=self.remote_launch_app, args=(ip, app), daemon=True).start()
 
-    def simulate_remote_launch(self, app_name):
+    def remote_launch_app(self, ip, app):
+        # Placeholder: simulate remote launch
+        # Replace with your remote command logic (e.g., PSExec, SSH, etc.)
         time.sleep(2)
-        self.add_log(f"{app_name} launched successfully.", "green")
-        ToastNotification(self.root, title="App Launch", message=f"{app_name} launched on device.", duration=3000).show()
-
-    def add_custom_exe(self):
-        path = filedialog.askopenfilename(filetypes=[("Executable files", "*.exe")])
-        if not path:
-            return
-        name = os.path.basename(path)
-        if name in self.app_paths:
-            messagebox.showinfo("App Exists", "This executable is already in the list.")
-            return
-        self.app_paths[name] = f'"{path}"'
-        menu = self.app_menu["menu"]
-        menu.add_command(label=name, command=tk._setit(self.selected_app, name))
-        self.add_log(f"Custom executable added: {name}", "green")
-        self.selected_app.set(name)
-
-    def schedule_app(self):
-        if not self.selected_device:
-            messagebox.showwarning("No Device Selected", "Please select a device first.")
-            return
-        app_name = self.selected_app.get()
-        schedule_time = self.scheduled_time.get().strip()
-        if not schedule_time:
-            messagebox.showwarning("Schedule Time Missing", "Please enter a schedule time in HH:MM 24hr format.")
-            return
-        if not self.validate_time_format(schedule_time):
-            messagebox.showwarning("Invalid Time Format", "Please enter time as HH:MM in 24-hour format.")
-            return
-        self.add_log(f"Scheduled {app_name} to launch on {self.selected_device} at {schedule_time}.", "blue")
-        # Simulate scheduling (dummy)
-        ToastNotification(self.root, title="Schedule Set", message=f"{app_name} scheduled at {schedule_time}", duration=3000).show()
-
-    def validate_time_format(self, t):
-        try:
-            hh, mm = t.split(":")
-            hh = int(hh)
-            mm = int(mm)
-            return 0 <= hh < 24 and 0 <= mm < 60
-        except:
-            return False
-
-    def check_app_status(self):
-        if not self.selected_device:
-            messagebox.showwarning("No Device Selected", "Please select a device first.")
-            return
-        self.add_log(f"Checking app status on {self.selected_device}...", "blue")
-        # Dummy check
-        time.sleep(1)
-        self.add_log("App is running normally.", "green")
-        ToastNotification(self.root, title="App Status", message="App is running normally.", duration=3000).show()
+        self.log(f"App '{app}' launched successfully on {ip}", "green")
 
     def send_command(self, cmd):
         if not self.selected_device:
-            messagebox.showwarning("No Device Selected", "Please select a device first.")
+            messagebox.showwarning("No device selected", "Please select a device first.")
             return
-        if cmd == "shutdown":
-            confirm = messagebox.askyesno("Confirm Shutdown", f"Are you sure you want to shutdown {self.selected_device}?")
-            if not confirm:
-                return
-            self.add_log(f"Sending shutdown command to {self.selected_device}...", "red")
-        elif cmd == "restart":
-            confirm = messagebox.askyesno("Confirm Restart", f"Are you sure you want to restart {self.selected_device}?")
-            if not confirm:
-                return
-            self.add_log(f"Sending restart command to {self.selected_device}...", "orange")
-        else:
-            self.add_log(f"Unknown command: {cmd}", "red")
-            return
-        # Dummy command execution delay
-        threading.Thread(target=self.simulate_command_exec, args=(cmd,), daemon=True).start()
+        hostname, ip = self.selected_device
+        self.log(f"Sending '{cmd}' command to {hostname} ({ip})...")
+        threading.Thread(target=self.remote_send_command, args=(ip, cmd), daemon=True).start()
 
-    def simulate_command_exec(self, cmd):
-        time.sleep(3)
-        if cmd == "shutdown":
-            self.add_log(f"{self.selected_device} shutdown command sent successfully.", "red")
-            ToastNotification(self.root, title="Shutdown", message="Shutdown command sent.", duration=3000).show()
-        elif cmd == "restart":
-            self.add_log(f"{self.selected_device} restart command sent successfully.", "orange")
-            ToastNotification(self.root, title="Restart", message="Restart command sent.", duration=3000).show()
+    def remote_send_command(self, ip, cmd):
+        # Placeholder: simulate remote commands (restart, shutdown)
+        time.sleep(2)
+        self.log(f"Command '{cmd}' executed successfully on {ip}", "green")
+
+    def check_app_status(self):
+        if not self.selected_device:
+            messagebox.showwarning("No device selected", "Please select a device first.")
+            return
+        hostname, ip = self.selected_device
+        app = self.selected_app.get()
+        self.log(f"Checking status of '{app}' on {hostname} ({ip})...")
+        threading.Thread(target=self.remote_check_status, args=(ip, app), daemon=True).start()
+
+    def remote_check_status(self, ip, app):
+        # Placeholder: simulate status check
+        time.sleep(2)
+        # Randomly say running or not
+        import random
+        status = random.choice(["running", "not running"])
+        self.log(f"App '{app}' is currently {status} on {ip}", "blue")
+
+    def add_custom_exe(self):
+        file_path = filedialog.askopenfilename(title="Select Executable", filetypes=[("Executables", "*.exe")])
+        if file_path:
+            exe_name = os.path.basename(file_path)
+            self.app_paths[exe_name] = file_path
+            menu = self.app_menu["menu"]
+            menu.add_command(label=exe_name, command=tk._setit(self.selected_app, exe_name))
+            self.selected_app.set(exe_name)
+            self.log(f"Added custom executable: {exe_name}", "purple")
+
+    def schedule_app(self):
+        if not self.selected_device:
+            messagebox.showwarning("No device selected", "Please select a device first.")
+            return
+        schedule_time = self.scheduled_time.get().strip()
+        if not schedule_time:
+            messagebox.showwarning("Schedule Time Missing", "Please enter a schedule time in HH:MM format.")
+            return
+        try:
+            schedule_dt = datetime.datetime.strptime(schedule_time, "%H:%M").time()
+        except ValueError:
+            messagebox.showerror("Invalid Time Format", "Please enter time as HH:MM in 24-hour format.")
+            return
+
+        now = datetime.datetime.now()
+        today_schedule = datetime.datetime.combine(now.date(), schedule_dt)
+        if today_schedule < now:
+            today_schedule += datetime.timedelta(days=1)
+
+        delta_seconds = (today_schedule - now).total_seconds()
+
+        hostname, ip = self.selected_device
+        app = self.selected_app.get()
+        self.log(f"Scheduling app '{app}' on {hostname} ({ip}) at {schedule_time}...")
+
+        # Start a thread to wait and launch
+        threading.Thread(target=self.schedule_launch, args=(delta_seconds, ip, app, schedule_time), daemon=True).start()
+
+    def schedule_launch(self, delay_seconds, ip, app, sched_time):
+        time.sleep(delay_seconds)
+        self.log(f"Scheduled time reached: Launching '{app}' on {ip}...", "orange")
+        self.remote_launch_app(ip, app)
 
 def main():
     root = tb.Window(themename="superhero")
